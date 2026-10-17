@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pluviòmetre d'Hendaia</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#e8f3ff;background:#091827}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at top right,#214867,#091827 65%)}main{max-width:1000px;margin:auto;padding:36px 20px 70px}header{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap}h1{font-size:clamp(1.8rem,5vw,3rem);margin:12px 0 4px}p{color:#a8c1d5}.pill{border:1px solid #52718b;border-radius:50px;padding:9px 15px;font-size:.85rem;color:#c3e2f8}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:15px;margin-top:30px}.card,.panel{background:#142d43cc;border:1px solid #31516b;border-radius:18px;padding:23px;box-shadow:0 10px 28px #0002}.label{font-size:.9rem;color:#a8c1d5}.value{font-size:2.1rem;font-weight:750;margin-top:10px}.panel{margin-top:20px}.bars{height:230px;display:flex;align-items:end;gap:12px;padding:22px 0 0;border-bottom:1px solid #46627a}.bar-group{flex:1;display:flex;align-items:center;flex-direction:column;justify-content:end;height:100%;min-width:0}.bar{background:linear-gradient(#75d7fb,#2578ad);width:65%;max-width:65px;border-radius:7px 7px 0 0;min-height:2px}.day{font-size:.8rem;color:#a8c1d5;padding-top:9px}.amount{font-size:.75rem;color:#bfe8ff;margin-bottom:5px}footer{font-size:.85rem;margin-top:30px;color:#9eb7ca}.notice{padding:13px 16px;border-radius:10px;background:#223c4e;color:#d5eaff;margin-top:24px}
+</style>
+</head>
+<body><main>
+<header><div><div>🌧️ ESTACIÓ METEOROLÒGICA PARTICULAR</div><h1>Pluviòmetre d'Hendaia</h1><p>Dades de precipitació del jardí · Actualització automàtica</p></div><span class="pill" id="status">Esperant dades</span></header>
+<div class="notice" id="notice">Encara no s'han connectat les dades reals. Els valors apareixeran quan Node-RED publiqui el fitxer dades.json.</div>
+<section class="grid" aria-label="Dades de pluja">
+<div class="card"><div class="label">☔ Pluja avui</div><div class="value" id="avui">—</div></div>
+<div class="card"><div class="label">💧 Intensitat actual</div><div class="value" id="intensitat">—</div></div>
+<div class="card"><div class="label">📅 Aquesta setmana</div><div class="value" id="setmana">—</div></div>
+<div class="card"><div class="label">🗓️ Aquest mes</div><div class="value" id="mes">—</div></div>
+<div class="card"><div class="label">🌦️ Aquest any</div><div class="value" id="any">—</div></div>
+<div class="card"><div class="label">🌧️ Dies de pluja aquest any</div><div class="value" id="dies_pluja">—</div></div>
+</section>
+<section class="panel"><h2>Precipitacions dels últims 7 dies</h2><div class="bars" id="bars" aria-label="Gràfic de pluja diària"><p>Esperant dades històriques…</p></div></section>
+<footer>Última actualització: <span id="updated">—</span> · Dades d'una estació particular, no oficials.</footer>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const mm=v=>typeof v==='number'&&Number.isFinite(v)?v.toLocaleString('ca-ES',{maximumFractionDigits:2})+' mm':'—';
+function update(d){
+ for(const k of ['avui','setmana','mes','any'])$(k).textContent=mm(d[k]);
+ $('intensitat').textContent=typeof d.intensitat==='number'?d.intensitat.toLocaleString('ca-ES',{maximumFractionDigits:1})+' mm/h':'—';
+ $('dies_pluja').textContent=Number.isFinite(d.dies_pluja)?String(d.dies_pluja):'—';
+ const date=d.actualitzat?new Date(d.actualitzat):null;
+ $('updated').textContent=date&&!isNaN(date)?date.toLocaleString('ca-ES',{dateStyle:'medium',timeStyle:'short'}):'—';
+ $('status').textContent='Dades publicades';$('notice').style.display='none';
+ if(Array.isArray(d.dies)&&d.dies.length){
+  const entries=d.dies.slice(-7);const max=Math.max(1,...entries.map(x=>Number(x.mm)||0));
+  $('bars').replaceChildren();for(const e of entries){const group=document.createElement('div');group.className='bar-group';const amount=document.createElement('span');amount.className='amount';amount.textContent=Number(e.mm||0).toLocaleString('ca-ES',{maximumFractionDigits:1});const bar=document.createElement('div');bar.className='bar';bar.style.height=Math.max(2,(Number(e.mm)||0)/max*165)+'px';const day=document.createElement('span');day.className='day';day.textContent=String(e.dia||'');group.append(amount,bar,day);$('bars').append(group);}
+ }
+}
+async function load(){try{const r=await fetch('./dades.json?ts='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('No disponible');update(await r.json());}catch(e){$('status').textContent='Sense dades';}}
+load();setInterval(load,5*60*1000);
+</script></body></html>
