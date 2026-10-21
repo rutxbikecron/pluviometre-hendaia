@@ -1,9 +1,9 @@
 {
-  "pluja_avui": 0,
-  "intensitat": 0,
-  "setmana": 0,
-  "mes": 0,
-  "any": 0,
-  "dies_pluja": 4,
-  "actualitzat": "2026-10-21T04:33:54.861Z"
+  "pluja_avui": 0.35,
+  "intensitat": 3.8,
+  "setmana": 0.35,
+  "mes": 0.35,
+  "any": 0.35,
+  "dies_pluja": 5,
+  "actualitzat": "2026-10-21T04:43:54.858Z"
 }
